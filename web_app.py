@@ -19,13 +19,16 @@ from flask import Response
 
 @app.before_request
 def require_login():
+    # Allow the health check endpoint without authentication
+    if request.path == '/health':
+        return
+        
     auth = request.authorization
     if not auth or not (auth.username == AUTH_USERNAME and auth.password == AUTH_PASSWORD):
         return Response(
             'Login required.', 401,
             {'WWW-Authenticate': 'Basic realm="Voucher Generator"'}
         )
-
 # ==========================================
 # CONFIGURATION (RELATIVE PATH FOR CLOUD)
 # ==========================================
@@ -140,6 +143,8 @@ def generate():
                 zip_file.write(img_path, img_filename)
         zip_buffer.seek(0)
         return send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='waitrose_vouchers.zip')
-
+@app.route('/health')
+def health():
+    return "OK", 200
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)
